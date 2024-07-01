@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
-import random
 import re
+import uuid
 from datetime import date, datetime
 
 import requests
@@ -361,13 +361,10 @@ def get_extra_info():
             }
 
 
-def random_hex(length: int = 1) -> str:
-    return "".join(random.choice("0123456789abcdef") for _ in range(length))
-
-
 API_BASE = "https://app.abfallplus.de/{}"
 API_ASSISTANT = API_BASE.format("assistent/{}")  # ignore: E501
-USER_AGENT = "{}/9.1.0.0 iOS/17.5 Device/iPhone Screen/1170x2532"
+USER_AGENT = "Android / {} 8.1.1 (1915081010) / DM=Pixel 3;DP=vbox86p;DN=vbox86;DT=vbox86p;SN=Google;SV=8.1.0 (27);MF=unknown"
+USER_AGENT_ASSISTANT = "Mozilla/5.0 (Linux; Android 8.1.0; Pixel 3 Build/OPM6.171019.030.E1; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/74.0.3729.186 Mobile Safari/537.36;"
 ABFALLARTEN_H2_SKIP = ["Sondermüll"]
 
 
@@ -423,7 +420,7 @@ class AppAbfallplusDe:
         strasse_id=None,
         hnr_id=None,
     ):
-        self._client = random_hex(48)
+        self._client = str(uuid.uuid4())
 
         self._app_id = app_id
         self._session = requests.Session()
@@ -455,9 +452,12 @@ class AppAbfallplusDe:
         if headers is None:
             headers = {}
 
-        headers["User-Agent"] = USER_AGENT.format(
-            MAP_APP_USERAGENTS.get(self._app_id, "%")
-        )
+        if base == API_ASSISTANT:
+            headers["User-Agent"] = USER_AGENT_ASSISTANT
+        else:
+            headers["User-Agent"] = USER_AGENT.format(
+                MAP_APP_USERAGENTS.get(self._app_id, "%")
+            )
 
         if method not in ("get", "post"):
             raise Exception(f"Method {method} not supported.")
